@@ -42,7 +42,6 @@ class MetricExporter:
         while True:
             # every time we clear up all the existing labels before setting new ones
             self.aws_daily_cost_usd .clear()
-            
             for aws_account in self.targets:
                 logging.info("querying cost data for aws account %s" % aws_account["Publisher"])
                 try:
@@ -77,15 +76,22 @@ class MetricExporter:
         return assumed_role_object["Credentials"]
 
     def query_aws_cost_explorer(self, aws_client, group_by):
-        end_date = datetime.today()
-        start_date = end_date - relativedelta(days=1)
+
+        today_date = datetime.today()
+        start_date = today_date - relativedelta(days=3)
+        start_time =  start_date.replace(hour=0, minute=0, second=0, microsecond=0)
+        end_date = today_date - relativedelta(days=2)
+        end_time = end_date.replace(hour=0, minute=0, second=0, microsecond=0)
+
+        logging.info("querying fom %s to %s" % (start_time, end_time))
+
         groups = list()
         if group_by["enabled"]:
             for group in group_by["groups"]:
                 groups.append({"Type": group["type"], "Key": group["key"]})
 
         response = aws_client.get_cost_and_usage(
-            TimePeriod={"Start": start_date.strftime("%Y-%m-%d"), "End": end_date.strftime("%Y-%m-%d")},
+            TimePeriod={"Start": start_time.strftime("%Y-%m-%d"), "End": end_time.strftime("%Y-%m-%d")},
             Filter={"Dimensions": {"Key": "RECORD_TYPE", "Values": ["Usage"]}},
             Granularity="DAILY",
             Metrics=["UnblendedCost"],
