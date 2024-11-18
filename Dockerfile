@@ -7,5 +7,6 @@ COPY ./app $APP_HOME
 COPY *.py package.json requirements.txt /
 RUN pip install -r requirements.txt
 
+
 ENV PYTHONUNBUFFERED 1
 ENTRYPOINT python main.py -c $APP_HOME/exporter_config.yaml
